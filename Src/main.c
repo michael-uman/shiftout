@@ -25,6 +25,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <stdlib.h>
+#include "digitalwrite.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -34,10 +35,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
-#define HIGH		GPIO_PIN_SET
-#define LOW     GPIO_PIN_RESET
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -51,12 +48,6 @@ UART_HandleTypeDef huart1;
 PCD_HandleTypeDef hpcd_USB_FS;
 
 /* USER CODE BEGIN PV */
-#define LSBFIRST 0
-#define MSBFIRST 1
-
-const int latch_pin = 8; 	// (ST_CP)
-const int clock_pin = 12;	// (SH_CP)
-const int data_pin = 11;	// (DS)
 
 /* USER CODE END PV */
 
@@ -71,59 +62,6 @@ static void MX_USB_PCD_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-struct digitalPinEntry {
-	GPIO_TypeDef * port;
-	uint16_t pin;
-};
-
-struct digitalPinEntry arduinoPinTable[] = { { GPIOA, GPIO_PIN_3 },				// D0
-		{ GPIOA, GPIO_PIN_2 },							// D1
-		{ GPIOC, GPIO_PIN_6 },							// D2
-		{ GPIOA, GPIO_PIN_10 },							// D3
-		{ GPIOC, GPIO_PIN_10 }, 						// D4
-		{ GPIOA, GPIO_PIN_15 },							// D5
-		{ GPIOA, GPIO_PIN_8 },							// D6
-		{ GPIOC, GPIO_PIN_13 },							// D7
-
-		{ GPIOC, GPIO_PIN_12 },							// D8
-		{ GPIOA, GPIO_PIN_9 },							// D9
-		{ GPIOA, GPIO_PIN_4 },							// D10
-		{ GPIOA, GPIO_PIN_7 },							// D11
-		{ GPIOA, GPIO_PIN_6 },							// D12
-		{ GPIOA, GPIO_PIN_5 },							// D13
-		{ GPIOB, GPIO_PIN_9 },							// D14
-		{ GPIOB, GPIO_PIN_8 },							// D15
-		};
-
-void digitalWrite(int pin, int value) {
-	HAL_GPIO_WritePin(arduinoPinTable[pin].port, arduinoPinTable[pin].pin, value);
-}
-
-/**
- * Shift data out to the shift-register
- *
- * Uses globals 'data_pin' and 'clock_pin'
- */
-void shiftOut(uint8_t bitOrder, uint8_t val) {
-	uint8_t i;
-
-	for (i = 0; i < 8; i++) {
-		if (bitOrder == LSBFIRST)
-			digitalWrite(data_pin, !!(val & (1 << i)));
-		else
-			digitalWrite(data_pin, !!(val & (1 << (7 - i))));
-
-		digitalWrite(clock_pin, HIGH);
-		digitalWrite(clock_pin, LOW);
-	}
-}
-
-void write_value(uint8_t value) {
-	digitalWrite(latch_pin, LOW);
-	shiftOut(MSBFIRST, value);
-	digitalWrite(latch_pin, HIGH);
-}
 
 void shiftUp() {
 	uint8_t i;
@@ -156,6 +94,9 @@ void randomPattern() {
 	}
 }
 
+/**
+ * Display sequence of LEDS spreading from the edges to the center...
+ */
 void pinchIn() {
 	for (int j = 0; j < 8; j++) {
 		for (int i = 0; i < 4; i++) {
@@ -165,6 +106,20 @@ void pinchIn() {
 		}
 	}
 }
+
+/**
+ * Display sequence of LEDS spreading out from center to edges...
+ */
+void pinchOut() {
+	for (int j = 0; j < 8; j++) {
+		for (int i = 3; i != 0; i--) {
+			uint8_t mask = (1L << (7 - i)) | ((1L << i));
+			write_value(mask);
+			HAL_Delay(100);
+		}
+	}
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -182,7 +137,6 @@ int main(void) {
 	HAL_Init();
 
 	/* USER CODE BEGIN Init */
-
 	/* USER CODE END Init */
 
 	/* Configure the system clock */
@@ -197,7 +151,7 @@ int main(void) {
 	MX_USART1_UART_Init();
 	MX_USB_PCD_Init();
 	/* USER CODE BEGIN 2 */
-
+	configure_shift_register(8, 12, 11);
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
