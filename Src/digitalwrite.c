@@ -8,11 +8,9 @@
 
 #include "digitalwrite.h"
 
-
-
 static int latch_pin  = 8; 	// (ST_CP)
 static int clock_pin  = 12;	// (SH_CP)
-static int data_pin 	= 11;	// (DS)
+static int data_pin   = 11;	// (DS)
 
 /**
  * This structure is used to translate pin # to GPIO Port and Pin on STM32
