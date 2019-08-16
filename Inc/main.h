@@ -88,6 +88,9 @@ void Error_Handler(void);
 #define STLINK_TX_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
+#define LOG_MSG(fmt, ...) printf(fmt, __VA_ARGS__ )
+
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
