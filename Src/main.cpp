@@ -85,7 +85,6 @@ int __io_putchar(int ch) {
 ShiftRegister sr(data_pin, clock_pin, latch_pin, MSBFIRST);
 
 void write_value(uint8_t value) {
-	digitalWrite(latch_pin, LOW);
 	sr.write(value);
 }
 
@@ -130,25 +129,29 @@ void randomPattern() {
 
 void pinchIn() {
 	int count = rand() % 10 + 4;
+	int delay = 100 + (rand() % 8) * 100;
+
 	LOG_MSG("%s\n", "pinchIn()");
 
 	for (int j = 0; j < count; j++) {
 		for (int i = 0; i < 4; i++) {
 			uint8_t mask = (1L << (7 - i)) | ((1L << i));
 			write_value(mask);
-			HAL_Delay(100);
+			HAL_Delay(delay);
 		}
 	}
 }
 void pinchOut() {
 	int count = rand() % 10 + 4;
+	int delay = 100 + (rand() % 8) * 100;
+
 	LOG_MSG("%s\n", "pinchOut()");
 
 	for (int j = 0; j < count; j++) {
 		for (int i = 3; i >= 0 ; i--) {
 			uint8_t mask = (1L << (7 - i)) | ((1L << i));
 			write_value(mask);
-			HAL_Delay(100);
+			HAL_Delay(delay);
 		}
 	}
 }
@@ -167,10 +170,12 @@ void displaySequence(int * data, size_t count) {
 void fillOut() {
 	LOG_MSG("%s\n", "fillOut()");
 	int masks[] = {
+		0x00, // 00000000
 		0x18, // 00011000
 		0x3c, // 00111100
 		0x7e, // 01111110
 		0xff, // 11111111
+		0x00, // 00000000
 	};
 
 	displaySequence(masks, sizeof(masks)/sizeof(int));
@@ -180,10 +185,12 @@ void fillIn() {
 	LOG_MSG("%s\n", "fillIn()");
 
 	int masks[] = {
+		0x00, // 00000000
 		0x81, // 10000001
 		0xc3, // 11000011
 		0xe7, // 11100111
 		0xff, // 11111111
+		0x00, // 00000000
 	};
 	displaySequence(masks, sizeof(masks)/sizeof(int));
 }
