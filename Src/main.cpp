@@ -25,6 +25,9 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <stdlib.h>
+#include "ArduinoPins.h"
+#include "ShiftRegister.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -51,8 +54,8 @@ UART_HandleTypeDef huart1;
 PCD_HandleTypeDef hpcd_USB_FS;
 
 /* USER CODE BEGIN PV */
-#define LSBFIRST 0
-#define MSBFIRST 1
+//#define LSBFIRST 0
+//#define MSBFIRST 1
 
 const int latch_pin = 8; 	// (ST_CP)
 const int clock_pin = 12;	// (SH_CP)
@@ -79,57 +82,11 @@ int __io_putchar(int ch) {
 	return ch;
 }
 
-struct digitalPinEntry {
-	GPIO_TypeDef * port;
-	uint16_t pin;
-};
-
-struct digitalPinEntry arduinoPinTable[] = { { GPIOA, GPIO_PIN_3 },				// D0
-		{ GPIOA, GPIO_PIN_2 },							// D1
-		{ GPIOC, GPIO_PIN_6 },							// D2
-		{ GPIOA, GPIO_PIN_10 },							// D3
-		{ GPIOC, GPIO_PIN_10 }, 						// D4
-		{ GPIOA, GPIO_PIN_15 },							// D5
-		{ GPIOA, GPIO_PIN_8 },							// D6
-		{ GPIOC, GPIO_PIN_13 },							// D7
-
-		{ GPIOC, GPIO_PIN_12 },							// D8
-		{ GPIOA, GPIO_PIN_9 },							// D9
-		{ GPIOA, GPIO_PIN_4 },							// D10
-		{ GPIOA, GPIO_PIN_7 },							// D11
-		{ GPIOA, GPIO_PIN_6 },							// D12
-		{ GPIOA, GPIO_PIN_5 },							// D13
-		{ GPIOB, GPIO_PIN_9 },							// D14
-		{ GPIOB, GPIO_PIN_8 },							// D15
-		};
-
-void digitalWrite(int pin, int value) {
-	HAL_GPIO_WritePin(arduinoPinTable[pin].port, arduinoPinTable[pin].pin, value);
-}
-
-/**
- * Shift data out to the shift-register
- *
- * Uses globals 'data_pin' and 'clock_pin'
- */
-void shiftOut(uint8_t bitOrder, uint8_t val) {
-	uint8_t i;
-
-	for (i = 0; i < 8; i++) {
-		if (bitOrder == LSBFIRST)
-			digitalWrite(data_pin, !!(val & (1 << i)));
-		else
-			digitalWrite(data_pin, !!(val & (1 << (7 - i))));
-
-		digitalWrite(clock_pin, HIGH);
-		digitalWrite(clock_pin, LOW);
-	}
-}
+ShiftRegister sr(data_pin, clock_pin, latch_pin, MSBFIRST);
 
 void write_value(uint8_t value) {
 	digitalWrite(latch_pin, LOW);
-	shiftOut(MSBFIRST, value);
-	digitalWrite(latch_pin, HIGH);
+	sr.write(value);
 }
 
 void shiftUp() {
@@ -200,7 +157,7 @@ void displaySequence(int * data, size_t count) {
 	int delay = 100 + (rand() % 8) * 100;
 	int repeat = rand() % 10 + 4;
 	for (int j = 0; j < repeat; j++) {
-		for (int i = 0 ; i < count ; i++) {
+		for (size_t i = 0 ; i < count ; i++) {
 			write_value(data[i]);
 			HAL_Delay(delay);
 		}
@@ -271,7 +228,7 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	LOG_MSG("%s\n", "Starting main loop...");
-
+	sr.begin();
 	while (1) {
     /* USER CODE END WHILE */
 
