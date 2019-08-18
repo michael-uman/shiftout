@@ -38,8 +38,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define HIGH		GPIO_PIN_SET
-#define LOW     GPIO_PIN_RESET
+//#define HIGH		GPIO_PIN_SET
+//#define LOW     GPIO_PIN_RESET
 
 /* USER CODE END PD */
 
@@ -63,6 +63,8 @@ const int latch_pin = 8; 	// (ST_CP)
 const int clock_pin = 12;	// (SH_CP)
 const int data_pin = 11;	// (DS)
 
+ShiftRegister sr(data_pin, clock_pin, latch_pin, MSBFIRST);
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -72,34 +74,69 @@ static void MX_TIM2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USB_PCD_Init(void);
 /* USER CODE BEGIN PFP */
+void shiftUp();
+void shiftDown();
+void randomPattern();
+void pinchIn();
+void pinchOut();
+void fillOut();
+void fillIn();
+void invertedShiftUp();
+void invertedShiftDown();
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+EFFECT_VEC effects[MAX_EFFECT] = {
+    { "shiftUp", 	   	    shiftUp },
+    { "shiftDown",	   	    shiftDown },
+    { "randomPattern", 	    randomPattern },
+    { "pinchIn",            pinchIn },
+    { "pinchOut",           pinchOut },
+    { "fillIn",             fillIn },
+    { "fillOut",            fillOut },
+    { "invertedShiftUp",    invertedShiftUp },
+    { "invertedShiftDown",  invertedShiftDown },
+};
+
 extern "C" int __io_putchar(int ch) {
-	uint8_t c[1];
-	c[0] = ch & 0x00FF;
-	HAL_UART_Transmit(&huart1, &*c, 1, 10);
-	return ch;
+    uint8_t c[1];
+    c[0] = ch & 0x00FF;
+    HAL_UART_Transmit(&huart1, &*c, 1, 10);
+    return ch;
 }
 
-ShiftRegister sr(data_pin, clock_pin, latch_pin, MSBFIRST);
 
-void write_value(uint8_t value) {
+static void write_value(uint8_t value) {
 	sr.write(value);
+}
+
+/**
+ * displaySequence - Run through data items, setting the value.
+ */
+static void displaySequence(int * data, size_t count) {
+	int delay = 100 + (rand() % 8) * 100;
+	int repeat = rand() % 10 + 4;
+	for (int j = 0; j < repeat; j++) {
+		for (size_t i = 0 ; i < count ; i++) {
+			write_value(data[i]);
+			HAL_Delay(delay);
+		}
+	}
 }
 
 void shiftUp() {
 	int i;
 	int count = rand() % 10 + 4;
-	LOG_MSG("%s\n", "shiftUp()");
+    int delay = 100 + (rand() % 8) * 100;
+
 	for (int x = 0 ; x < count ; x++) {
 		for (i = 0; i <= 7; i++) {
 			uint8_t m = (1L << i);
 			write_value(m);
-			HAL_Delay(100);
+			HAL_Delay(delay);
 		}
 	}
 }
@@ -107,21 +144,49 @@ void shiftUp() {
 void shiftDown() {
 	int i;
 	int count = rand() % 10 + 4;
-	LOG_MSG("%s\n", "shiftDown()");
+    int delay = 100 + (rand() % 8) * 100;
 
 	for (int x = 0 ; x < count ; x++) {
 		for (i = 7; i >=  0; i--) {
 			uint8_t m = (1L << i);
 			write_value(m);
-			HAL_Delay(100);
+			HAL_Delay(delay);
 		}
 	}
+}
+
+
+void invertedShiftUp() {
+    int i;
+    int count = rand() % 10 + 4;
+    int delay = 100 + (rand() % 8) * 100;
+
+    for (int x = 0 ; x < count ; x++) {
+        for (i = 0; i <= 7; i++) {
+            uint8_t m = 0xff ^ (1L << i);
+            write_value(m);
+            HAL_Delay(delay);
+        }
+    }
+}
+
+void invertedShiftDown() {
+    int i;
+    int count = rand() % 10 + 4;
+    int delay = 100 + (rand() % 8) * 100;
+
+    for (int x = 0 ; x < count ; x++) {
+        for (i = 7; i >=  0; i--) {
+            uint8_t m = 0xff ^ (1L << i);
+            write_value(m);
+            HAL_Delay(delay);
+        }
+    }
 }
 
 void randomPattern() {
 	int count = (rand() % 10) + 10;
 	int delay = 100 + (rand() % 8) * 100;
-	LOG_MSG("%s\n", "randomPattern()");
 
 	for (int i = 0; i < count; i++) {
 		int pattern = rand() % 255;
@@ -134,8 +199,6 @@ void pinchIn() {
 	int count = rand() % 10 + 4;
 	int delay = 100 + (rand() % 8) * 100;
 
-	LOG_MSG("%s\n", "pinchIn()");
-
 	for (int j = 0; j < count; j++) {
 		for (int i = 0; i < 4; i++) {
 			uint8_t mask = (1L << (7 - i)) | ((1L << i));
@@ -144,11 +207,10 @@ void pinchIn() {
 		}
 	}
 }
+
 void pinchOut() {
 	int count = rand() % 10 + 4;
 	int delay = 100 + (rand() % 8) * 100;
-
-	LOG_MSG("%s\n", "pinchOut()");
 
 	for (int j = 0; j < count; j++) {
 		for (int i = 3; i >= 0 ; i--) {
@@ -159,19 +221,7 @@ void pinchOut() {
 	}
 }
 
-void displaySequence(int * data, size_t count) {
-	int delay = 100 + (rand() % 8) * 100;
-	int repeat = rand() % 10 + 4;
-	for (int j = 0; j < repeat; j++) {
-		for (size_t i = 0 ; i < count ; i++) {
-			write_value(data[i]);
-			HAL_Delay(delay);
-		}
-	}
-}
-
 void fillOut() {
-	LOG_MSG("%s\n", "fillOut()");
 	int masks[] = {
 		0x00, // 00000000
 		0x18, // 00011000
@@ -185,8 +235,6 @@ void fillOut() {
 }
 
 void fillIn() {
-	LOG_MSG("%s\n", "fillIn()");
-
 	int masks[] = {
 		0x00, // 00000000
 		0x81, // 10000001
@@ -198,6 +246,17 @@ void fillIn() {
 	displaySequence(masks, sizeof(masks)/sizeof(int));
 }
 
+/**
+ * Dispatch the desired effect by effect id.
+ */
+void dispatchEffect(EFFECT_ID id) {
+    if (id < MAX_EFFECT) {
+        effectCB cb = effects[id].cb;
+        // Call the callback function...
+        LOG_MSG("Running effect '%s'\n", effects[id].name);
+        (*cb)();
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -244,32 +303,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-
-		int c = rand() % 7;
-
-		switch (c) {
-		case 0:
-			shiftUp();
-			break;
-		case 1:
-			randomPattern();
-			break;
-		case 2:
-			pinchIn();
-			break;
-		case 3:
-			pinchOut();
-			break;
-		case 4:
-			shiftDown();
-			break;
-		case 5:
-			fillIn();
-			break;
-		case 6:
-			fillOut();
-			break;
-		}
+        int c = rand() % MAX_EFFECT;
+        dispatchEffect((EFFECT_ID)c);
 	}
   /* USER CODE END 3 */
 }

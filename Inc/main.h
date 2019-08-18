@@ -38,6 +38,26 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
 
+typedef void (*effectCB)();
+
+typedef struct _effectVector {
+	const char * 	name;
+	effectCB 		cb;
+} EFFECT_VEC;
+
+typedef enum {
+    SHIFT_UP = 0,
+    SHIFT_DOWN,
+    RANDOM,
+    PINCH_IN,
+    PINCH_OUT,
+    FILL_IN,
+    FILL_OUT,
+    INVERTED_SHIFT_UP,
+    INVERTED_SHIFT_DOWN,
+    MAX_EFFECT,
+} EFFECT_ID;
+
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -47,6 +67,8 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
+
+#define LOG_MSG(fmt, ...) printf(fmt, __VA_ARGS__ )
 
 /* USER CODE END EM */
 
@@ -88,7 +110,6 @@ void Error_Handler(void);
 #define STLINK_TX_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
-#define LOG_MSG(fmt, ...) printf(fmt, __VA_ARGS__ )
 
 
 /* USER CODE END Private defines */
