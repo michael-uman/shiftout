@@ -55,6 +55,7 @@ typedef enum {
     FILL_OUT,
     INVERTED_SHIFT_UP,
     INVERTED_SHIFT_DOWN,
+    DOUBLE_DASH,
     MAX_EFFECT,
 } EFFECT_ID;
 

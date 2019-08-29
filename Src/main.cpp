@@ -83,6 +83,7 @@ void fillOut();
 void fillIn();
 void invertedShiftUp();
 void invertedShiftDown();
+void doubleDash();
 
 /* USER CODE END PFP */
 
@@ -99,6 +100,7 @@ EFFECT_VEC effects[MAX_EFFECT] = {
     { "fillOut",            fillOut },
     { "invertedShiftUp",    invertedShiftUp },
     { "invertedShiftDown",  invertedShiftDown },
+    { "doubleDash",         doubleDash, },
 };
 
 extern "C" int __io_putchar(int ch) {
@@ -244,6 +246,22 @@ void fillIn() {
 		0x00, // 00000000
 	};
 	displaySequence(masks, sizeof(masks)/sizeof(int));
+}
+
+void doubleDash() {
+    int masks[] = {
+        0x00, // 00000000
+        0x01, // 00000001
+        0x03, // 00000011
+        0x06, // 00000110
+        0x0c, // 00001100
+        0x18, // 00011000
+        0x30, // 00110000
+        0x60, // 01100000
+        0xc0, // 11000000
+        0x80, // 10000000
+    };
+    displaySequence(masks, sizeof(masks)/sizeof(int));
 }
 
 /**
